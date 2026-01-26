@@ -51,7 +51,7 @@ def health():
 @app.get("/predict")
 def predict():
     try:
-        predictions = model.predict_next_7_days(MODEL, MERGED_DF.drop(columns=["USDBDT"]), SCALER)
+        predictions = model.predict_next_7_days(MODEL, MERGED_DF, SCALER)
         predictions = {k: float(v) for k, v in predictions.items()}
         return predictions
     except Exception as e:
