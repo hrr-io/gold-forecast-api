@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+seaborn
+yfinance
+fredapi
+oandapyV20
+scikit-learn
+xgboost
+joblib
+fastapi
+apscheduler
+uvicorn
