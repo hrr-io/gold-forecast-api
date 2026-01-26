@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def merge_df(DFs, TARGET="XAUUSD", COLUMNS=[]):
+def merge_df(DFs, TARGET="XAUUSD", COLUMNS=None):
     df = pd.concat(DFs, axis=1).sort_index()
     for col in df.columns:
         if col != TARGET:
@@ -9,7 +9,8 @@ def merge_df(DFs, TARGET="XAUUSD", COLUMNS=[]):
     df = df.dropna(subset=[TARGET]).dropna()
     # full_index = pd.date_range(start=df.index.min(), end=df.index.max(), freq='B')
     # df = df.reindex(full_index).ffill().dropna()
-    df = df.reindex(columns=COLUMNS)
+    if COLUMNS:
+        df = df.reindex(columns=COLUMNS)
     df.index.name = 'DATE'
     return df
 

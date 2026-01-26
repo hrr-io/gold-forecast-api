@@ -19,11 +19,9 @@ if os.path.exists("models/scaler.pkl"):
     SCALER = joblib.load("models/scaler.pkl")
 else:
     SCALER = None
-RAW_DFS, MERGED_DF = updater.daily_update(
-                        updater.ASSETS,
-                        FRED_API_KEY=os.environ.get("FRED_API_KEY"),
-                        OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
-                     )
+
+RAW_DFS = {name: updater.load_raw_df(config["path"]) for name, config in updater.ASSETS.items()}
+MERGED_DF = updater.util.merge_df(list(RAW_DFS.values()))
 
 def scheduled_update():
     global RAW_DFS, MERGED_DF
