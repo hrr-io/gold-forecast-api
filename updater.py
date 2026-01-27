@@ -22,9 +22,6 @@ def append_raw_data(EXISTING_DF, NEW_DF):
     df.sort_index(inplace=True)
     return df
 
-def save_raw_df(DF, PATH):
-    DF.to_csv(PATH, index=True, index_label="DATE")
-
 def fetch_new_data(SOURCE, IDENTIFIER, START, END, FRED_API_KEY, OANDA_API_KEY):
     if SOURCE == "oanda":
         return fetch.get_oanda_data(INSTRUMENTS=IDENTIFIER, START=START, END=END, TOKEN=OANDA_API_KEY)
