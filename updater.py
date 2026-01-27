@@ -39,7 +39,7 @@ def update_asset(NAME, DF, CONFIG, FRED_API_KEY, OANDA_API_KEY):
     today = pd.Timestamp.today().normalize()
     new_df = fetch_new_data(
         SOURCE=CONFIG["source"],
-        IDENTIFIER=CONFIG["identifier"],
+        IDENTIFIER={CONFIG["identifier"] : NAME},
         START=last_date.strftime("%Y-%m-%d"),
         END=today.strftime("%Y-%m-%d"),
         FRED_API_KEY=FRED_API_KEY,

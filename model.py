@@ -79,20 +79,13 @@ def build_train_model(X_train, y_train, X_eval, y_eval):
 
 def predict_next_7_days(MODEL, DF, SCALER=None, days=7):
     X_today = build_features(DF).iloc[[-1]]
-
-    expected_features = MODEL.get_booster().feature_names
-    X_today = X_today.reindex(columns=expected_features, fill_value=0)
-
     if SCALER:
         X_today = SCALER.transform(X_today)
-
     last_date = DF.index.max()
     prediction = {}
     current_X = X_today.copy()
-
     for h in range(1, days + 1):
         next_date = last_date + pd.Timedelta(days=h)
         y_pred = MODEL.predict(current_X)[0]
         prediction[next_date.strftime("%Y-%m-%d")] = float(y_pred)
-
     return prediction
