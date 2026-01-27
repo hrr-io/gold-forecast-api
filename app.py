@@ -1,11 +1,13 @@
 import os
 import importlib
 import joblib
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from typing import Optional
 import pandas as pd
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+from datetime import timedelta
 from github import Github
 
 import updater
@@ -74,8 +76,6 @@ def health():
 #     except Exception as e:
 #         return {"error": str(e)}
 
-from datetime import timedelta
-
 @app.get("/predict")
 def predict():
     start_date = pd.Timestamp.today().normalize()
@@ -99,12 +99,6 @@ def update():
         return {"status": "updated", "last_date": str(MERGED_DF.index.max())}
     except Exception as e:
         return {"error": str(e)}
-
-from fastapi import FastAPI, HTTPException
-from typing import Optional
-import pandas as pd
-
-app = FastAPI()
 
 @app.get("/asset/{name}")
 def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None):
