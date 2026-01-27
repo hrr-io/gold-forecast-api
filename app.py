@@ -41,22 +41,23 @@ def predict():
     return {
         (start_date + timedelta(days=i)).strftime("%Y-%m-%d"): value
         for i, value in enumerate([
-            2335.42,
-            2341.18,
-            2338.77,
-            2346.05,
-            2352.91,
-            2349.63,
-            2356.88
+            5030.42,
+            5109.18,
+            5189.77,
+            5226.05,
+            5312.91,
+            5407.63,
+            5497.88
         ], start=1)
     }
 
 def push_to_github():
+    global RAW_DFS
     g = Github(os.environ.get("GITHUB_TOKEN"))
     repo = g.get_repo(os.environ.get("GITHUB_REPO"))
     
     for name, config in updater.ASSETS.items():
-        df = updater.RAW_DFS[name]
+        df = RAW_DFS[name]
         content = df.to_csv(index=True)
         path = f"data/{name.lower()}_raw_df.csv"
         try:
