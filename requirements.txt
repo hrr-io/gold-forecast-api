@@ -11,3 +11,4 @@ joblib
 fastapi
 apscheduler
 uvicorn
+PyGithub

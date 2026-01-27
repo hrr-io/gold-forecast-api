@@ -46,7 +46,6 @@ def update_asset(NAME, DF, CONFIG, FRED_API_KEY, OANDA_API_KEY):
         OANDA_API_KEY=OANDA_API_KEY
     )
     DF = append_raw_data(DF, new_df)
-    save_raw_df(DF, CONFIG["path"])
     return DF
 
 def daily_update(ASSETS, FRED_API_KEY, OANDA_API_KEY):
@@ -65,46 +64,46 @@ ASSETS = {
     "XAUUSD": {
         "source": "oanda",
         "identifier": "XAU_USD",
-        "path": "data/xauusd_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/xauusd_raw_df.csv"
     },
     "WTICO": {
         "source": "oanda",
         "identifier": "WTICO_USD",
-        "path": "data/wtico_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/wtico_raw_df.csv"
     },
     "DFII10": {
         "source": "fred",
         "identifier": "DFII10",
-        "path": "data/dfii10_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/dfii10_raw_df.csv"
     },
     "T10YIE": {
         "source": "fred",
         "identifier": "T10YIE",
-        "path": "data/t10yie_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/t10yie_raw_df.csv"
     },
     "DXY": {
         "source": "yfinance",
         "identifier": "DX-Y.NYB",
-        "path": "data/dxy_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/dxy_raw_df.csv"
     },
     "SPX": {
         "source": "yfinance",
         "identifier": "^GSPC",
-        "path": "data/spx_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/spx_raw_df.csv"
     },
     "VIX": {
         "source": "yfinance",
         "identifier": "^VIX",
-        "path": "data/vix_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/vix_raw_df.csv"
     },
     "GVZ": {
         "source": "yfinance",
         "identifier": "^GVZ",
-        "path": "data/gvz_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/gvz_raw_df.csv"
     },
     "USDBDT": {
         "source": "yfinance",
         "identifier": "USDBDT=X",
-        "path": "data/usdbdt_raw_df.csv"
+        "path": "https://raw.githubusercontent.com/hrr-io/gold-forecast-api/master/data/usdbdt_raw_df.csv"
     }
 }

@@ -6,6 +6,7 @@ import pandas as pd
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+from github import Github
 
 import updater
 import model
@@ -23,6 +24,20 @@ else:
 RAW_DFS = {name: updater.load_raw_df(config["path"]) for name, config in updater.ASSETS.items()}
 MERGED_DF = updater.util.merge_df(list(RAW_DFS.values()))
 
+def push_to_github():
+    g = Github(os.environ.get("GITHUB_TOKEN"))
+    repo = g.get_repo(os.environ.get("GITHUB_REPO"))
+    
+    for name, config in updater.ASSETS.items():
+        df = updater.RAW_DFS[name]
+        content = df.to_csv(index=True)
+        path = f"data/{name.lower()}_raw_df.csv"
+        try:
+            file = repo.get_contents(path)
+            repo.update_file(path, f"Update {name}", content, file.sha)
+        except Exception as e:
+            print(f"Error pushing {name} to GitHub: {e}")
+
 def scheduled_update():
     global RAW_DFS, MERGED_DF
     try:
@@ -31,6 +46,7 @@ def scheduled_update():
             FRED_API_KEY=os.environ.get("FRED_API_KEY"),
             OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
         )
+        push_to_github()
         print(f"[{pd.Timestamp.now()}] Datasets updated successfully.")
     except Exception as e:
         print(f"[{pd.Timestamp.now()}] Error updating datasets: {e}")
