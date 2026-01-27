@@ -46,6 +46,7 @@ def scheduled_update():
             FRED_API_KEY=os.environ.get("FRED_API_KEY"),
             OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
         )
+        print(f"[{pd.Timestamp.now()}] RAW_DFS updated in memory successfully.")
         push_to_github()
         print(f"[{pd.Timestamp.now()}] Datasets updated successfully.")
     except Exception as e:
