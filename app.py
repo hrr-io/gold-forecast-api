@@ -26,47 +26,6 @@ else:
 RAW_DFS = {name: updater.load_raw_df(config["path"]) for name, config in updater.ASSETS.items()}
 MERGED_DF = updater.util.merge_df(list(RAW_DFS.values()))
 
-def push_to_github():
-    g = Github(os.environ.get("GITHUB_TOKEN"))
-    repo = g.get_repo(os.environ.get("GITHUB_REPO"))
-    
-    for name, config in updater.ASSETS.items():
-        df = updater.RAW_DFS[name]
-        content = df.to_csv(index=True)
-        path = f"data/{name.lower()}_raw_df.csv"
-        try:
-            file = repo.get_contents(path)
-            repo.update_file(path, f"Update {name}", content, file.sha)
-        except Exception as e:
-            print(f"Error pushing {name} to GitHub: {e}")
-
-def scheduled_update():
-    global RAW_DFS, MERGED_DF
-    try:
-        RAW_DFS, MERGED_DF = updater.daily_update(
-            updater.ASSETS,
-            FRED_API_KEY=os.environ.get("FRED_API_KEY"),
-            OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
-        )
-        print(f"[{pd.Timestamp.now()}] RAW_DFS updated in memory successfully.")
-        push_to_github()
-        print(f"[{pd.Timestamp.now()}] Datasets updated successfully.")
-    except Exception as e:
-        print(f"[{pd.Timestamp.now()}] Error updating datasets: {e}")
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(scheduled_update, "interval", hours=6)
-scheduler.start()
-atexit.register(lambda: scheduler.shutdown())
-
-@app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "last_data_date": str(MERGED_DF.index.max()),
-        "scheduler_running": scheduler.running
-    }
-
 # @app.get("/predict")
 # def predict():
 #     try:
@@ -92,6 +51,48 @@ def predict():
         ], start=1)
     }
 
+def push_to_github():
+    g = Github(os.environ.get("GITHUB_TOKEN"))
+    repo = g.get_repo(os.environ.get("GITHUB_REPO"))
+    
+    for name, config in updater.ASSETS.items():
+        df = updater.RAW_DFS[name]
+        content = df.to_csv(index=True)
+        path = f"data/{name.lower()}_raw_df.csv"
+        try:
+            file = repo.get_contents(path)
+            repo.update_file(path, f"Update {name}", content, file.sha)
+        except Exception as e:
+            print(f"Error pushing {name} to GitHub: {e}")
+
+def scheduled_update():
+    global RAW_DFS, MERGED_DF
+    try:
+        RAW_DFS, MERGED_DF = updater.daily_update(
+            updater.ASSETS,
+            FRED_API_KEY=os.environ.get("FRED_API_KEY"),
+            OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
+        )
+        print(f"[{pd.Timestamp.now()}] RAW_DFS updated in memory successfully.")
+        GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+        GITHUB_REPO = os.environ.get("GITHUB_REPO")
+        if GITHUB_TOKEN is None or GITHUB_REPO is None:
+            print("[WARNING] GitHub token or repo not set in environment!")
+        else:
+            print(f"[INFO] GitHub token loaded: {GITHUB_TOKEN[:4]}***")
+            print(f"[INFO] GitHub repo loaded: {GITHUB_REPO}")
+        
+        
+        push_to_github()
+        print(f"[{pd.Timestamp.now()}] Datasets updated successfully.")
+    except Exception as e:
+        print(f"[{pd.Timestamp.now()}] Error updating datasets: {e}")
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_update, "interval", hours=6)
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())
+
 @app.get("/update")
 def update():
     try:
@@ -103,19 +104,14 @@ def update():
 @app.get("/asset/{name}")
 def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None):
     global RAW_DFS
-
     asset_name_upper = name.upper()
     df_keys_upper = {k.upper(): k for k in RAW_DFS.keys()}
-
     if asset_name_upper not in df_keys_upper:
         raise HTTPException(status_code=404, detail=f"{name} data not loaded")
-
     actual_key = df_keys_upper[asset_name_upper]
     df = RAW_DFS[actual_key].copy()
-
     min_date = df.index.min()
     max_date = df.index.max()
-
     if start:
         try:
             start_date = pd.to_datetime(start)
@@ -125,7 +121,6 @@ def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None)
             start_date = min_date
     else:
         start_date = min_date
-
     if end:
         try:
             end_date = pd.to_datetime(end)
@@ -135,14 +130,20 @@ def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None)
             end_date = max_date
     else:
         end_date = max_date
-
     if start_date > end_date:
         print(f"[INFO] Asset: {actual_key}, requested range {start} to {end}, returned empty")
         return {}
-
     df = df[(df.index >= start_date) & (df.index <= end_date)]
     print(f"[INFO] Asset: {actual_key}, returned range: {df.index.min().date()} to {df.index.max().date()}, rows: {len(df)}")
     return df.squeeze().rename_axis("DATE").to_dict()
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "last_data_date": str(MERGED_DF.index.max()),
+        "scheduler_running": scheduler.running
+    }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
