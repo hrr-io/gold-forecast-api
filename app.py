@@ -100,6 +100,56 @@ def update():
     except Exception as e:
         return {"error": str(e)}
 
+from fastapi import FastAPI, HTTPException
+from typing import Optional
+import pandas as pd
+
+app = FastAPI()
+
+@app.get("/asset/{name}")
+def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None):
+    global RAW_DFS
+
+    asset_name_upper = name.upper()
+    df_keys_upper = {k.upper(): k for k in RAW_DFS.keys()}
+
+    if asset_name_upper not in df_keys_upper:
+        raise HTTPException(status_code=404, detail=f"{name} data not loaded")
+
+    actual_key = df_keys_upper[asset_name_upper]
+    df = RAW_DFS[actual_key].copy()
+
+    min_date = df.index.min()
+    max_date = df.index.max()
+
+    if start:
+        try:
+            start_date = pd.to_datetime(start)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid start date format. Use YYYY-MM-DD")
+        if start_date < min_date:
+            start_date = min_date
+    else:
+        start_date = min_date
+
+    if end:
+        try:
+            end_date = pd.to_datetime(end)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid end date format. Use YYYY-MM-DD")
+        if end_date > max_date:
+            end_date = max_date
+    else:
+        end_date = max_date
+
+    if start_date > end_date:
+        print(f"[INFO] Asset: {actual_key}, requested range {start} to {end}, returned empty")
+        return {}
+
+    df = df[(df.index >= start_date) & (df.index <= end_date)]
+    print(f"[INFO] Asset: {actual_key}, returned range: {df.index.min().date()} to {df.index.max().date()}, rows: {len(df)}")
+    return df.squeeze().rename_axis("DATE").to_dict()
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
