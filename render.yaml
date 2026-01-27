@@ -9,5 +9,9 @@ services:
         fromSecret: FRED_API_KEY
       - key: OANDA_API_KEY
         fromSecret: OANDA_API_KEY
+      - key: GITHUB_TOKEN
+        fromSecret: GITHUB_TOKEN
+      - key: GITHUB_REPO
+        fromSecret: GITHUB_REPO
     healthCheckPath: /health
     autoDeploy: true
