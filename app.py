@@ -55,16 +55,16 @@ def push_to_github():
     global RAW_DFS
     g = Github(os.environ.get("GITHUB_TOKEN"))
     repo = g.get_repo(os.environ.get("GITHUB_REPO"))
-    
+    commit_message = f"Update all datasets - {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
     for name, config in updater.ASSETS.items():
         df = RAW_DFS[name]
         content = df.to_csv(index=True)
         path = f"data/{name.lower()}_raw_df.csv"
         try:
             file = repo.get_contents(path)
-            repo.update_file(path, f"Update {name}", content, file.sha)
+            repo.update_file(path, commit_message, content, file.sha)
         except Exception as e:
-            print(f"Error pushing {name} to GitHub: {e}")
+            repo.create_file(path, commit_message, content)
 
 def scheduled_update():
     global RAW_DFS, MERGED_DF
