@@ -74,15 +74,6 @@ def scheduled_update():
             OANDA_API_KEY=os.environ.get("OANDA_API_KEY")
         )
         print(f"[{pd.Timestamp.now()}] RAW_DFS updated in memory successfully.")
-        GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-        GITHUB_REPO = os.environ.get("GITHUB_REPO")
-        if GITHUB_TOKEN is None or GITHUB_REPO is None:
-            print("[WARNING] GitHub token or repo not set in environment!")
-        else:
-            print(f"[INFO] GitHub token loaded: {GITHUB_TOKEN[:4]}***")
-            print(f"[INFO] GitHub repo loaded: {GITHUB_REPO}")
-        
-        
         push_to_github()
         print(f"[{pd.Timestamp.now()}] Datasets updated successfully.")
     except Exception as e:
@@ -131,10 +122,10 @@ def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None)
     else:
         end_date = max_date
     if start_date > end_date:
-        print(f"[INFO] Asset: {actual_key}, requested range {start} to {end}, returned empty")
+        print(f"Asset: {actual_key}, requested range {start} to {end}, returned empty")
         return {}
     df = df[(df.index >= start_date) & (df.index <= end_date)]
-    print(f"[INFO] Asset: {actual_key}, returned range: {df.index.min().date()} to {df.index.max().date()}, rows: {len(df)}")
+    print(f"Asset: {actual_key}, returned range: {df.index.min().date()} to {df.index.max().date()}, rows: {len(df)}")
     return df.squeeze().rename_axis("DATE").to_dict()
 
 @app.get("/health")
