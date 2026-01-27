@@ -8,7 +8,7 @@ import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 from datetime import timedelta
-from github import Github
+from github import Github, InputGitTreeElement
 
 import updater
 import model
@@ -55,16 +55,22 @@ def push_to_github():
     global RAW_DFS
     g = Github(os.environ.get("GITHUB_TOKEN"))
     repo = g.get_repo(os.environ.get("GITHUB_REPO"))
-    commit_message = f"Update all datasets - {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    for name, config in updater.ASSETS.items():
-        df = RAW_DFS[name]
+    master_ref = repo.get_git_ref("heads/master")
+    latest_commit = repo.get_commit(master_ref.object.sha)
+    base_tree = latest_commit.commit.tree
+    tree_elements = []
+    for name, df in RAW_DFS.items():
         content = df.to_csv(index=True)
         path = f"data/{name.lower()}_raw_df.csv"
-        try:
-            file = repo.get_contents(path)
-            repo.update_file(path, commit_message, content, file.sha)
-        except Exception as e:
-            repo.create_file(path, commit_message, content)
+        tree_elements.append(InputGitTreeElement(path, '100644', 'blob', content))
+    new_tree = repo.create_git_tree(tree_elements, base_tree)
+    if new_tree.sha == base_tree.sha:
+        print("All datasets are already up to date. No commit created.")
+        return
+    commit_message = f"Update all datasets - {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    new_commit = repo.create_git_commit(commit_message, new_tree, [latest_commit.commit])
+    master_ref.edit(new_commit.sha)
+    print(f"Commit created: {commit_message}")
 
 def scheduled_update():
     global RAW_DFS, MERGED_DF
