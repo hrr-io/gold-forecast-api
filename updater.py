@@ -34,6 +34,9 @@ def fetch_new_data(SOURCE, IDENTIFIER, START, END, FRED_API_KEY, OANDA_API_KEY):
 def update_asset(NAME, DF, CONFIG, FRED_API_KEY, OANDA_API_KEY):
     last_date = DF.index.max() + pd.Timedelta(days=1)
     today = pd.Timestamp.today().normalize()
+    if last_date >= today:
+        print(f"{NAME} is already up to date. Skipping fetch.")
+        return DF
     new_df = fetch_new_data(
         SOURCE=CONFIG["source"],
         IDENTIFIER={CONFIG["identifier"] : NAME},

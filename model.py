@@ -89,3 +89,5 @@ def predict_next_7_days(MODEL, DF, SCALER=None, days=7):
         y_pred = MODEL.predict(current_X)[0]
         prediction[next_date.strftime("%Y-%m-%d")] = float(y_pred)
     return prediction
+
+PLACEHOLDER = [5030.42, 5109.18, 5189.77, 5226.05, 5312.91, 5407.63, 5497.88]

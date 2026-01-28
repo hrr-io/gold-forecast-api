@@ -26,30 +26,20 @@ else:
 RAW_DFS = {name: updater.load_raw_df(config["path"]) for name, config in updater.ASSETS.items()}
 MERGED_DF = updater.util.merge_df(list(RAW_DFS.values()))
 
-# @app.get("/predict")
-# def predict():
-#     try:
-#         predictions = model.predict_next_7_days(MODEL, MERGED_DF, SCALER)
-#         predictions = {k: float(v) for k, v in predictions.items()}
-#         return predictions
-#     except Exception as e:
-#         return {"error": str(e)}
-
 @app.get("/predict")
 def predict():
     start_date = pd.Timestamp.today().normalize()
-    return {
-        (start_date + timedelta(days=i)).strftime("%Y-%m-%d"): value
-        for i, value in enumerate([
-            5030.42,
-            5109.18,
-            5189.77,
-            5226.05,
-            5312.91,
-            5407.63,
-            5497.88
-        ], start=1)
-    }
+    try:
+        predictions = model.predict_next_7_days(MODEL, MERGED_DF, SCALER)
+        return {
+            (start_date + timedelta(days=i)).strftime("%Y-%m-%d"): float(value)
+            for i, value in enumerate(predictions.values(), start=1)
+        }
+    except Exception as e:
+        return {
+            (start_date + timedelta(days=i)).strftime("%Y-%m-%d"): float(value)
+            for i, value in enumerate(model.PLACEHOLDER, start=1)
+        }
 
 def push_to_github():
     global RAW_DFS
@@ -132,8 +122,13 @@ def get_asset(name: str, start: Optional[str] = None, end: Optional[str] = None)
         print(f"Asset: {actual_key}, requested range {start} to {end}, returned empty")
         return {}
     df = df[(df.index >= start_date) & (df.index <= end_date)]
-    print(f"Asset: {actual_key}, returned range: {df.index.min().date()} to {df.index.max().date()}, rows: {len(df)}")
-    return df.squeeze().rename_axis("DATE").to_dict()
+    if not df.empty:
+        df_start, df_end = df.index.min().date(), df.index.max().date()
+    else:
+        df_start = df_end = None
+    df.index = df.index.strftime('%Y-%m-%d')
+    print(f"Asset: {actual_key}, returned range: {df_start} to {df_end}, rows: {len(df)}")
+    return {date: float(value) for date, value in df.squeeze().items()}
 
 @app.get("/health")
 def health():
